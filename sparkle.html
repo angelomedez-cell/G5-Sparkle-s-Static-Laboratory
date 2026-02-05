@@ -2,1320 +2,1083 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sparkle's Static Lab - Grade 5 Science</title>
-    
-    <!-- React & Tailwind Setup -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Science Safety Squad</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-
     <style>
-        body { font-family: 'Comic Neue', 'Comic Sans MS', sans-serif; background-color: #f0f9ff; }
-        .sim-container { touch-action: none; }
-        
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
-            100% { transform: translateY(0px); }
-        }
-        .floating { animation: float 3s ease-in-out infinite; }
-        
-        .particle { transition: all 0.5s ease-out; }
-        .animate-spin-slow { animation: spin 10s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        /* Talking Animation */
-        @keyframes talk {
-            0%, 100% { transform: scaleY(1); }
-            50% { transform: scaleY(0.9); }
-        }
-        .talking { animation: talk 0.15s infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;900&display=swap');
 
-        /* Physics & Interaction Classes */
-        .draggable { cursor: grab; touch-action: none; }
-        .draggable:active { cursor: grabbing; }
-        
-        .no-lag { transition: none; }
-        .smooth-catchup { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
-
-        .flying-electron {
-            animation: flyToTarget 0.6s ease-out forwards;
-        }
-        @keyframes flyToTarget {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0.5); opacity: 0; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #1a1a2e;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
         }
 
-        .speech-bubble::before {
-            content: '';
+        /* Typography & UI */
+        .game-font { font-family: 'Fredoka', sans-serif; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .game-btn {
+            background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(253, 185, 49, 0.4);
+            transition: all 0.2s ease;
+            transform: scale(1);
+        }
+        .game-btn:active { transform: scale(0.95); }
+
+        /* Game Container */
+        #game-container {
+            width: 100%;
+            height: 100dvh;
+            background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-stage {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            background: #fff;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* UI Header */
+        #ui-header {
             position: absolute;
-            left: -12px;
-            top: 24px;
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-            border-right: 12px solid #FCD34D; 
+            top: 0; left: 0; right: 0;
+            height: 90px;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
         }
 
-        @keyframes pointMove {
-            0% { transform: translateX(0); opacity: 0.5; }
-            50% { transform: translateX(10px); opacity: 1; }
-            100% { transform: translateX(0); opacity: 0.5; }
+        /* Modern Timer */
+        .timer-capsule {
+            position: absolute;
+            top: 24px; left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 16px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
-        .arrow-anim { animation: pointMove 1.5s infinite; }
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00C853, #64DD17);
+            border-radius: 20px;
+            transition: width 0.1s linear, background 0.3s;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake-anim {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px) rotate(-1deg); }
+            40% { transform: translateX(5px) rotate(1deg); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        .shake-screen { animation: shake-anim 0.4s ease-in-out; }
+
+        @keyframes wave-move {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Level Backgrounds - Complex Gradients */
+        .bg-bathroom { background: radial-gradient(circle at 50% 0%, #E0F7FA, #B2EBF2); }
+        .bg-beach { background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 50%, #FFF59D 50%, #FFF176 100%); }
+        .bg-circuit { background: radial-gradient(circle at 50% 50%, #455A64 0%, #263238 100%); }
+        .bg-night { background: linear-gradient(180deg, #1A237E 0%, #283593 100%); }
+
+        /* SVG Filters & Effects */
+        .glow-filter { filter: drop-shadow(0 0 8px rgba(255, 235, 59, 0.8)); }
+        .shadow-filter { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+        
+        /* Particle System Base */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: particle-fly 0.8s ease-out forwards;
+        }
+        @keyframes particle-fly {
+            0% { transform: translate(0,0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        
+        .wave-path {
+            animation: wave-move 1s linear infinite;
+        }
+
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
-
-        // --- Audio Engine (Web Audio API) ---
-        // Initialize context lazily to avoid auto-play policy issues
-        const getAudioCtx = () => {
-            if (typeof window !== 'undefined') {
-                return new (window.AudioContext || window.webkitAudioContext)();
-            }
-            return null;
-        };
-
-        let audioCtx = null;
-
-        // Music State
-        let musicInterval = null;
-        let noteIndex = 0;
-        // C Major 7th Arpeggio pattern (C4, E4, G4, B4, C5...)
-        const musicNotes = [
-            261.63, 329.63, 392.00, 493.88, // C4, E4, G4, B4
-            523.25, 493.88, 392.00, 329.63, // C5, B4, G4, E4
-            293.66, 349.23, 440.00, 523.25, // D4, F4, A4, C5 (Dm7)
-            587.33, 523.25, 440.00, 349.23  // D5, C5, A4, F4
-        ];
-
-        const playMusicNote = () => {
-            if (!audioCtx) audioCtx = getAudioCtx();
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            if (!audioCtx) return;
+<div id="game-container">
+    <div id="game-stage">
+        
+        <!-- UI Layer -->
+        <div id="ui-header" class="hidden">
+            <!-- Lives -->
+            <div id="lives-container" class="flex space-x-2"></div>
             
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            const now = audioCtx.currentTime;
-            const freq = musicNotes[noteIndex];
-            noteIndex = (noteIndex + 1) % musicNotes.length;
-
-            osc.type = 'triangle'; // Triangle wave for a softer 8-bit sound
-            osc.frequency.setValueAtTime(freq, now);
-            
-            // Envelope for relaxing feel (Attack -> Decay)
-            gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1); // Keep volume low
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
-
-            osc.start(now);
-            osc.stop(now + 1.5);
-        };
-
-        const toggleMusic = (shouldPlay) => {
-            if (shouldPlay) {
-                if (!musicInterval) {
-                // Play a note every 600ms
-                musicInterval = setInterval(playMusicNote, 600);
-                }
-            } else {
-                if (musicInterval) {
-                clearInterval(musicInterval);
-                musicInterval = null;
-                }
-            }
-        };
-
-        const playSound = (type) => {
-            if (!audioCtx) audioCtx = getAudioCtx();
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            if (!audioCtx) return;
-
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            const now = audioCtx.currentTime;
-
-            switch (type) {
-                case 'pop':
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, now);
-                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-                gainNode.gain.setValueAtTime(0.1, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-                break;
-                case 'blip': 
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(600, now);
-                osc.frequency.linearRampToValueAtTime(800, now + 0.05);
-                gainNode.gain.setValueAtTime(0.05, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.05);
-                osc.start(now);
-                osc.stop(now + 0.05);
-                break;
-                case 'zap':
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(500, now);
-                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-                gainNode.gain.setValueAtTime(0.2, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
-                break;
-                case 'rub':
-                const bufferSize = audioCtx.sampleRate * 0.1;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-                const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(0.05, now);
-                noiseGain.gain.linearRampToValueAtTime(0, now + 0.1);
-                noise.connect(noiseGain);
-                noiseGain.connect(audioCtx.destination);
-                noise.start(now);
-                break;
-                case 'roll': 
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(100, now);
-                osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
-                gainNode.gain.setValueAtTime(0.05, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
-                osc.start(now);
-                osc.stop(now + 0.15);
-                break;
-                case 'swish': 
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, now);
-                osc.frequency.linearRampToValueAtTime(600, now + 0.2);
-                gainNode.gain.setValueAtTime(0.02, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
-                break;
-                case 'success':
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, now);
-                osc.frequency.setValueAtTime(554, now + 0.1); // C#
-                osc.frequency.setValueAtTime(659, now + 0.2); // E
-                gainNode.gain.setValueAtTime(0.1, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
-                osc.start(now);
-                osc.stop(now + 0.4);
-                break;
-                case 'fail':
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
-                gainNode.gain.setValueAtTime(0.1, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
-                osc.start(now);
-                osc.stop(now + 0.3);
-                break;
-                default:
-                break;
-            }
-        };
-
-        // --- Shared Components ---
-
-        const Button = ({ onClick, children, disabled, className = "" }) => (
-            <button 
-                onClick={(e) => { playSound('pop'); onClick(e); }} 
-                disabled={disabled}
-                className={`px-6 py-2 rounded-full font-bold shadow-lg transform transition active:scale-95 ${disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400 text-white'} ${className}`}
-            >
-                {children}
-            </button>
-        );
-
-        // --- Sparkle Character Component ---
-        const Sparkle = ({ message, emotion = 'happy', speak = true }) => {
-            const [isSpeaking, setIsSpeaking] = useState(false);
-
-            useEffect(() => {
-                if (!speak) {
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                return;
-                }
-
-                if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-
-                // Sanitize text
-                const spokenText = message.replace(/\s?\(?[+-]\)?/g, '').replace(/\s?\(0\)/g, '');
-
-                const utterance = new SpeechSynthesisUtterance(spokenText);
-                utterance.lang = 'en-US';
-                utterance.pitch = 1.2; 
-                utterance.rate = 1.0; 
-                
-                const voices = window.speechSynthesis.getVoices();
-                const preferredVoice = voices.find(v => 
-                    v.name.includes('Google US English') || 
-                    v.name.includes('Zira') || 
-                    v.name.includes('Samantha') ||
-                    v.name.includes('Female')
-                ) || voices[0];
-                
-                if (preferredVoice) utterance.voice = preferredVoice;
-
-                utterance.onstart = () => setIsSpeaking(true);
-                utterance.onend = () => setIsSpeaking(false);
-
-                window.speechSynthesis.speak(utterance);
-                }
-
-                return () => {
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                };
-            }, [message, speak]);
-
-            const animationClass = isSpeaking 
-                ? '' 
-                : (emotion === 'excited' ? 'animate-bounce' : 'floating');
-
-            return (
-                <div className="flex items-start gap-4 mb-6 w-full max-w-4xl animate-fadeIn z-50 relative">
-                <div className="flex-shrink-0 flex flex-col items-center">
-                    {/* Sparkle Container */}
-                    <div className={`text-8xl relative ${animationClass}`}>
-                    {/* Face */}
-                    <span 
-                        role="img" 
-                        aria-label="Sparkle" 
-                        className="inline-block origin-bottom"
-                        style={{ filter: emotion === 'shocked' ? 'invert(1)' : 'none' }}
-                    >
-                        {emotion === 'shocked' ? '😲' : '👩'}
-                    </span>
-
-                    {/* Antenna/Spark */}
-                    <div className="absolute -top-2 -right-4 text-5xl text-yellow-600 font-bold z-20 drop-shadow-md">⚡</div>
-                    
-                    {/* Speaking Indicator */}
-                    {isSpeaking && (
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-1 bg-yellow-400/50 blur-sm animate-pulse"></div>
-                    )}
-                    </div>
-                    <div className="font-bold text-purple-800 mt-2 bg-purple-200 px-3 py-0.5 rounded-full text-sm border border-purple-400 shadow-sm">Sparkle</div>
-                </div>
-                
-                <div className="bg-white border-l-8 border-yellow-300 p-5 rounded-r-xl rounded-bl-xl shadow-md flex-grow relative speech-bubble mt-4 transition-all">
-                    <p className="text-gray-800 font-medium leading-relaxed text-lg">{message}</p>
-                </div>
-                </div>
-            );
-        };
-
-        const GuideArrow = ({ text, className = "", direction = "right" }) => (
-            <div className={`absolute pointer-events-none z-40 flex items-center ${className} ${direction === "left" ? "flex-row-reverse" : ""}`}>
-                <span className="bg-white/90 px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm whitespace-nowrap">{text}</span>
-                <div className={`text-4xl text-blue-500 font-bold arrow-anim ${direction === "left" ? "rotate-180" : ""}`}>&rarr;</div>
+            <!-- Timer -->
+            <div class="timer-capsule">
+                <div id="timer-bar" class="timer-fill"></div>
             </div>
-        );
 
-        // --- STAGE 1: Atom Builder ---
-        const AtomBuilder = ({ onComplete, settings }) => {
-            const [protons, setProtons] = useState(0);
-            const [neutrons, setNeutrons] = useState(0);
-            const [electrons, setElectrons] = useState(0);
+            <!-- Score -->
+            <div id="score-display" class="game-font text-3xl font-black text-gray-700 drop-shadow-sm">000</div>
+        </div>
+
+        <!-- Screens -->
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+            <div class="animate-[float_3s_ease-in-out_infinite]">
+                <h1 class="game-font text-6xl mb-2 text-center drop-shadow-lg leading-tight">SCIENCE<br>SAFETY<br>SQUAD</h1>
+            </div>
             
-            const isComplete = protons === 3 && neutrons === 4 && electrons === 3;
-            
-            const getMessage = () => {
-                if (isComplete) return "Perfect! That's a stable Lithium atom. See how the Protons and Neutrons clump in the middle?";
-                if (protons > 3) return "Whoa! Too many protons. The nucleus is unstable!";
-                return "Let's build a Lithium atom! I need 3 Protons (+), 4 Neutrons (0), and 3 Electrons (-).";
-            };
+            <div class="glass-panel p-6 mt-8 mb-8 max-w-sm text-center text-gray-800">
+                <p class="text-xl font-bold mb-2">"Knowledge is Power!"</p>
+                <p class="text-sm opacity-80">Solve mini-puzzles before the timer melts!</p>
+            </div>
 
-            return (
-                <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 animate-fadeIn">
-                <h2 className="text-2xl font-bold mb-4 text-purple-600">Step 1: Inside the Atom</h2>
-                <Sparkle message={getMessage()} emotion={isComplete ? 'excited' : 'happy'} speak={settings.speak} />
+            <button onclick="game.start()" class="game-btn px-12 py-4 text-2xl font-black text-indigo-900 tracking-wider">
+                START MISSION
+            </button>
+        </div>
 
-                <div className="relative w-80 h-80 md:w-96 md:h-96 bg-gray-900 rounded-full flex items-center justify-center mb-6 overflow-hidden ring-4 ring-gray-200 shadow-xl">
-                    <div className="absolute w-64 h-64 border-2 border-dashed border-gray-600 rounded-full animate-spin-slow" style={{animationDuration: '10s'}}></div>
-                    <div className="absolute w-48 h-48 border-2 border-dashed border-gray-600 rounded-full animate-spin-slow" style={{animationDuration: '5s'}}></div>
-                    
-                    <div className="absolute w-24 h-24 flex items-center justify-center z-10 transition-all duration-300">
-                    {Array.from({ length: protons }).map((_, i) => (
-                        <div key={`p-${i}`} className="absolute w-5 h-5 bg-red-500 rounded-full shadow-sm border border-red-300 flex items-center justify-center text-[8px] text-white font-bold transition-all duration-500"
-                            style={{ transform: `translate(${12 * Math.sqrt(i) * Math.cos(i * 2.4)}px, ${12 * Math.sqrt(i) * Math.sin(i * 2.4)}px)` }}>+</div>
-                    ))}
-                    {Array.from({ length: neutrons }).map((_, i) => (
-                        <div key={`n-${i}`} className="absolute w-5 h-5 bg-gray-400 rounded-full shadow-sm border border-gray-300 transition-all duration-500"
-                        style={{ transform: `translate(${12 * Math.sqrt(protons+i) * Math.cos((protons+i) * 2.4)}px, ${12 * Math.sqrt(protons+i) * Math.sin((protons+i) * 2.4)}px)` }}></div>
-                    ))}
-                    </div>
+        <!-- Game Over -->
+        <div id="game-over-screen" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 text-white">
+            <h1 class="game-font text-6xl text-red-500 mb-4 drop-shadow-glow">MISSION FAILED</h1>
+            <div class="text-8xl font-black mb-2 text-yellow-400" id="final-score-display">0</div>
+            <p class="text-xl opacity-60 mb-8">Score</p>
+            <button onclick="game.reset()" class="game-btn px-10 py-3 text-xl font-bold text-gray-900">RETRY</button>
+        </div>
 
-                    {Array.from({ length: electrons }).map((_, i) => {
-                    const angle = (i / electrons) * 2 * Math.PI;
-                    const radius = 100 + (i % 2) * 30;
-                    return (
-                        <div key={`e-${i}`} className="absolute w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-xs shadow-glow transition-all duration-500"
-                            style={{ transform: `translate(${Math.cos(angle) * radius}px, ${Math.sin(angle) * radius}px)` }}>
-                        -
-                        </div>
-                    );
-                    })}
-                </div>
+        <!-- Transition -->
+        <div id="transition-screen" class="hidden absolute inset-0 z-45 bg-black/40 backdrop-blur-md flex items-center justify-center pointer-events-none">
+            <h2 id="level-instruction" class="game-font text-5xl text-white text-center drop-shadow-xl animate-[pop_0.5s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards]"></h2>
+        </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                    {[{l:'Protons (+)', c:protons, s:setProtons, col:'red'}, {l:'Neutrons (0)', c:neutrons, s:setNeutrons, col:'gray'}, {l:'Electrons (-)', c:electrons, s:setElectrons, col:'yellow'}].map((item, idx) => (
-                    <div key={idx} className="flex flex-col items-center">
-                        <span className={`font-bold text-${item.col}-600 mb-1`}>{item.l}</span>
-                        <div className="flex gap-2 items-center">
-                        <Button onClick={() => { if(settings.sound) playSound('blip'); item.s(Math.max(0, item.c - 1)); }} className={`px-2 py-1 bg-${item.col}-200 text-black hover:bg-${item.col}-300`}>-</Button>
-                        <span className="text-xl font-mono w-6 text-center">{item.c}</span>
-                        <Button onClick={() => { if(settings.sound) playSound('blip'); item.s(item.c + 1); }} className={`px-2 py-1 bg-${item.col}-500 hover:bg-${item.col}-600`}>+</Button>
-                        </div>
-                    </div>
-                    ))}
-                </div>
+        <!-- Level Root -->
+        <div id="level-root" class="w-full h-full relative"></div>
 
-                {isComplete && (
-                    <div className="mt-6 animate-bounce">
-                    <Button onClick={onComplete} className="bg-green-500 hover:bg-green-600 text-xl px-8 py-3">Next Lab &rarr;</Button>
-                    </div>
-                )}
-                </div>
-            );
+    </div>
+</div>
+
+<script>
+/* --- Assets & Utils --- */
+const SVGs = {
+    bolt: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
+    heart: `<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`
+};
+
+function createParticle(x, y, color, container, speed = 1.0) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 3 + Math.random() * 6;
+    const angle = (Math.random() * Math.PI) + Math.PI; // Upwards arch
+    const dist = 30 + Math.random() * 40;
+    
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.backgroundColor = color;
+    p.style.borderRadius = '50%';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+    p.style.animationDuration = (0.5 / speed) + 's';
+    
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 600);
+}
+
+/* --- Engine --- */
+class GameEngine {
+    constructor() {
+        this.lives = 3;
+        this.score = 0;
+        this.levelCount = 0;
+        this.isPlaying = false;
+        this.currentTime = 0;
+        this.timerInterval = null;
+        this.currentLevelObj = null;
+        this.levels = [LevelFaucet, LevelUmbrella, LevelCircuit, LevelCandle];
+        this.isLevelTransitioning = false;
+
+        this.ui = {
+            start: document.getElementById('start-screen'),
+            gameover: document.getElementById('game-over-screen'),
+            transition: document.getElementById('transition-screen'),
+            hud: document.getElementById('ui-header'),
+            root: document.getElementById('level-root'),
+            timer: document.getElementById('timer-bar'),
+            lives: document.getElementById('lives-container'),
+            score: document.getElementById('score-display'),
+            instruction: document.getElementById('level-instruction'),
+            stage: document.getElementById('game-stage')
         };
+    }
 
-        // --- STAGE 2: Electron Shells ---
-        const ElectronShellLevel = ({ onComplete, settings }) => {
-            const [knocked, setKnocked] = useState(false);
-            
-            return (
-                <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 animate-fadeIn">
-                    <h2 className="text-2xl font-bold mb-4 text-purple-600">Step 2: Why do they move?</h2>
-                    <Sparkle 
-                        message={knocked ? "See that? The nucleus is safe deep inside, but that outer electron is loose and ready to fly!" : "The Nucleus is protected deep inside. But look at the Outside Shell... tap that electron!"} 
-                        emotion={knocked ? 'excited' : 'happy'}
-                        speak={settings.speak}
-                    />
+    start() {
+        this.lives = 3;
+        this.score = 0;
+        this.levelCount = 0;
+        this.isPlaying = true;
+        this.updateHUD();
+        
+        this.ui.start.classList.add('hidden');
+        this.ui.gameover.classList.add('hidden');
+        this.ui.hud.classList.remove('hidden');
+        
+        this.nextLevel();
+    }
 
-                    <div className="relative w-full h-80 bg-gray-900 rounded-xl flex items-center justify-center overflow-hidden border-4 border-gray-700">
-                        
-                        {!knocked && <GuideArrow text="Tap the Electron!" className="top-1/3 right-1/3" direction="left" />}
+    reset() {
+        this.isPlaying = false;
+        clearInterval(this.timerInterval);
+        this.ui.gameover.classList.add('hidden');
+        this.ui.start.classList.remove('hidden');
+        this.ui.hud.classList.add('hidden');
+        this.ui.root.innerHTML = '';
+        if (this.currentLevelObj) {
+            this.currentLevelObj.cleanup();
+            this.currentLevelObj = null;
+        }
+    }
 
-                        {/* Fixed Container for precise alignment */}
-                        <div className="relative w-64 h-64 flex items-center justify-center">
-                            {/* Nucleus (Safe) */}
-                            <div className="absolute w-32 h-32 bg-gray-800 rounded-full flex items-center justify-center z-10 border-4 border-gray-600">
-                                <div className="text-white text-center text-xs">
-                                    <div className="font-bold text-red-400">Protons</div>
-                                    <div className="font-bold text-gray-400">Neutrons</div>
-                                    <div className="text-[10px] mt-1">(Stuck inside)</div>
-                                </div>
-                            </div>
+    updateHUD() {
+        this.ui.lives.innerHTML = '';
+        for(let i=0; i<3; i++) {
+            const el = document.createElement('div');
+            el.innerHTML = SVGs.bolt;
+            el.className = i < this.lives ? 'text-yellow-400 filter drop-shadow-md' : 'text-gray-300 opacity-30';
+            this.ui.lives.appendChild(el);
+        }
+        this.ui.score.innerText = this.score.toString().padStart(3, '0');
+    }
 
-                            {/* Shell */}
-                            <div className="absolute inset-0 border-2 border-dashed border-gray-500 rounded-full"></div>
+    async nextLevel() {
+        if (!this.isPlaying) return;
+        this.isLevelTransitioning = false; 
 
-                            {/* Target Electron - Aligned to right edge of shell */}
-                            <button 
-                                onClick={() => { setKnocked(true); if(settings.sound) playSound('zap'); }}
-                                className={`absolute w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(250,204,21,0.6)] hover:scale-110 transition-transform z-20
-                                ${knocked ? 'flying-electron' : 'animate-bounce'}`}
-                                style={{ 
-                                    top: '50%',
-                                    right: '-1.5rem',
-                                    marginTop: '-1.5rem',
-                                    '--tx': '200px', '--ty': '-200px'
-                                }}
-                            >
-                                -
-                            </button>
-                            {/* Moved Label Down */}
-                            <div className="absolute top-[65%] right-[-5rem] text-gray-400 text-sm w-20 text-left">
-                                Outer Shell
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-6 text-center">
-                        {knocked && (
-                            <Button onClick={onComplete} className="bg-green-500 hover:bg-green-600 text-xl px-8 py-3">Got it! Next &rarr;</Button>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        // --- STAGE 3: The Rules of Attraction ---
-        const ChargesLevel = ({ onComplete, settings }) => {
-            const [chargeL, setChargeL] = useState('pos'); 
-            const [chargeR, setChargeR] = useState('pos');
-            const [animating, setAnimating] = useState(false);
-            const [tested, setTested] = useState(false);
-
-            const isAttract = chargeL !== chargeR;
-            const isRepel = chargeL === chargeR;
-
-            const handleTest = () => {
-                setAnimating(true);
-                if(settings.sound) playSound(isAttract ? 'swish' : 'zap');
-                setTimeout(() => {
-                    setAnimating(false);
-                    setTested(true);
-                }, 1000);
-            };
-
-            const reset = () => {
-                setTested(false);
-                setAnimating(false);
-            }
-
-            useEffect(() => {
-                reset();
-            }, [chargeL, chargeR]);
-
-            return (
-                <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 animate-fadeIn">
-                    <h2 className="text-2xl font-bold mb-4 text-purple-600">Step 3: The Rules of Attraction</h2>
-                    <Sparkle
-                        message={tested
-                            ? (isAttract ? "Opposites Attract! They pull together like best friends." : "Like charges Repel! They push away because they are too similar.")
-                            : "Change the charges to see what happens. Do opposites attract or repel?"}
-                        speak={settings.speak}
-                    />
-
-                    <div className="relative w-full h-64 bg-gray-100 rounded-xl border-2 border-gray-300 flex items-center justify-center gap-20 overflow-hidden">
-                        {/* Left Charge */}
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-xl transition-all duration-700
-                            ${chargeL === 'pos' ? 'bg-red-500' : 'bg-yellow-400 text-black'}
-                            ${(animating || tested) && isAttract ? 'translate-x-[60px]' : ''}
-                            ${(animating || tested) && isRepel ? '-translate-x-[60px]' : ''}
-                        `}>
-                            {chargeL === 'pos' ? '+' : '-'}
-                        </div>
-
-                        {/* Force Indicators */}
-                        <div className="flex flex-col items-center justify-center h-full w-20">
-                            {tested && isAttract && <div className="text-4xl font-bold text-green-500 animate-pulse">→ ←</div>}
-                            {tested && isRepel && <div className="text-4xl font-bold text-red-500 animate-pulse">← →</div>}
-                        </div>
-
-                        {/* Right Charge */}
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-xl transition-all duration-700
-                            ${chargeR === 'pos' ? 'bg-red-500' : 'bg-yellow-400 text-black'}
-                            ${(animating || tested) && isAttract ? '-translate-x-[60px]' : ''}
-                            ${(animating || tested) && isRepel ? 'translate-x-[60px]' : ''}
-                        `}>
-                            {chargeR === 'pos' ? '+' : '-'}
-                        </div>
-                    </div>
-
-                    {/* Controls */}
-                    <div className="flex justify-between w-full max-w-md mt-6 gap-8">
-                        <div className="flex gap-2">
-                            <Button onClick={() => setChargeL('pos')} disabled={chargeL === 'pos'} className={chargeL === 'pos' ? 'ring-2 ring-offset-2 ring-red-500' : 'opacity-50'}>+</Button>
-                            <Button onClick={() => setChargeL('neg')} disabled={chargeL === 'neg'} className={chargeL === 'neg' ? 'ring-2 ring-offset-2 ring-yellow-400' : 'opacity-50'}>-</Button>
-                        </div>
-
-                        <Button onClick={handleTest} className="bg-purple-600 hover:bg-purple-700 w-32">Test!</Button>
-
-                        <div className="flex gap-2">
-                            <Button onClick={() => setChargeR('pos')} disabled={chargeR === 'pos'} className={chargeR === 'pos' ? 'ring-2 ring-offset-2 ring-red-500' : 'opacity-50'}>+</Button>
-                            <Button onClick={() => setChargeR('neg')} disabled={chargeR === 'neg'} className={chargeR === 'neg' ? 'ring-2 ring-offset-2 ring-yellow-400' : 'opacity-50'}>-</Button>
-                        </div>
-                    </div>
-
-                    <div className="mt-8 h-12">
-                        {tested && (
-                            <Button onClick={onComplete} className="bg-green-500 hover:bg-green-600 text-xl px-8 py-3">Got it! Next &rarr;</Button>
-                        )}
-                    </div>
-                </div>
-            )
+        if (this.currentLevelObj) {
+            this.currentLevelObj.cleanup();
+            this.ui.root.innerHTML = '';
         }
 
-        // --- STAGE 4: Comb & Hair ---
-        const CombLab = ({ onComplete, settings }) => {
-            const [charge, setCharge] = useState(0);
-            const [flyingElectrons, setFlyingElectrons] = useState([]);
-            const [combPos, setCombPos] = useState({ x: 30, y: 10 }); // Percent
+        this.levelCount++;
+        let duration = 15000;
+        if(this.levelCount > 15) duration = Math.max(3000, 15000 - (this.levelCount - 15) * 600);
 
-            const handleMove = (e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                setCombPos({ x: Math.min(90, Math.max(10, x)), y: Math.min(80, Math.max(5, y)) });
+        const LevelClass = this.levels[Math.floor(Math.random() * this.levels.length)];
+        this.currentLevelObj = new LevelClass(this, duration);
 
-                if (y > 50 && x > 20 && x < 80) {
-                    if (charge < 12 && Math.random() > 0.85) {
-                        if(settings.sound) playSound('rub');
-                        const id = Date.now();
-                        setFlyingElectrons(prev => [...prev, { id, x: Math.random() * 50, y: Math.random() * 20 }]);
-                        setTimeout(() => {
-                            setCharge(c => c + 1);
-                            setFlyingElectrons(prev => prev.filter(e => e.id !== id));
-                        }, 600);
-                    }
-                }
-            };
+        this.ui.transition.classList.remove('hidden');
+        this.ui.instruction.innerText = this.currentLevelObj.instruction;
+        
+        await new Promise(r => setTimeout(r, 1200));
+        
+        if (!this.isPlaying) return; 
 
-            return (
-                <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 animate-fadeIn">
-                    <h2 className="text-2xl font-bold mb-4 text-purple-600">Step 4: The Comb & Hair</h2>
-                    <Sparkle message="Time to steal some electrons! Rub the plastic comb on the hair. The friction will knock those outer electrons right onto the comb!" speak={settings.speak} />
+        this.ui.transition.classList.add('hidden');
+        this.currentLevelObj.render(this.ui.root);
+        this.currentLevelObj.start();
+        this.startTimer(duration);
+    }
 
-                    <div className="relative w-full h-80 bg-pink-50 rounded-xl border-2 border-pink-200 overflow-hidden select-none touch-none cursor-none"
-                        onMouseMove={handleMove}
-                        onTouchMove={(e) => handleMove(e.touches[0])}
-                    >
-                        
-                        {charge < 3 && <GuideArrow text="Rub here!" className="bottom-20 left-1/2 -translate-x-1/2" direction="down" />}
+    startTimer(ms) {
+        clearInterval(this.timerInterval);
+        this.currentTime = ms;
+        const total = ms;
+        
+        this.ui.timer.style.width = '100%';
+        this.ui.timer.style.background = 'linear-gradient(90deg, #00C853, #64DD17)';
 
-                        {/* Hair Patch - Longer Strands & Taller Area */}
-                        <div className="absolute bottom-[-15px] left-1/4 w-1/2 h-64 bg-transparent rounded-t-full relative overflow-visible pointer-events-none">
-                            {Array.from({length: 30}).map((_,i) => (
-                                <div key={i} className="absolute bottom-0 w-1 bg-yellow-800 origin-bottom" style={{height: `${120 + Math.random()*80}%`, left: `${i*3.5}%`, transform: `rotate(${(i-15)*2.5}deg)`}}></div>
-                            ))}
-                            {/* Scalp base */}
-                            <div className="absolute bottom-0 w-full h-20 bg-yellow-900 rounded-t-full"></div>
-                            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white font-bold opacity-50">HAIR</div>
-                        </div>
-
-                        {/* Comb */}
-                        <div className="absolute w-64 h-24 bg-purple-600 rounded-lg transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center z-20 shadow-xl pointer-events-none"
-                            style={{ left: `${combPos.x}%`, top: `${combPos.y}%` }}>
-                            <div className="w-full h-4 bg-purple-700 mt-auto flex justify-around">
-                                {Array.from({length:15}).map((_,i) => <div key={i} className="w-1 h-8 bg-purple-600"></div>)}
-                            </div>
-                            <div className="absolute top-2 text-white font-bold opacity-80">PLASTIC COMB</div>
-                            
-                            <div className="absolute top-0 right-0 flex flex-wrap w-full h-full p-2 gap-1 justify-center">
-                                {Array.from({length: charge}).map((_, i) => (
-                                    <div key={`c-${i}`} className="w-4 h-4 bg-yellow-300 rounded-full text-[10px] flex items-center justify-center font-bold animate-pulse">-</div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {flyingElectrons.map(e => (
-                            <div key={e.id} className="absolute bottom-20 left-1/2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center font-bold z-30 flying-electron"
-                                style={{ '--tx': '0px', '--ty': '-100px' }}>
-                                -
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-4 text-center">
-                        <p className="text-lg">Electrons Stolen: <span className="font-bold text-xl">{charge} / 12</span></p>
-                    </div>
-
-                    {charge >= 12 && (
-                        <div className="mt-6 animate-bounce">
-                            <Button onClick={onComplete} className="bg-green-500 hover:bg-green-600 text-xl px-8 py-3">Next: Balloon Lab &rarr;</Button>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        // --- STAGE 5: Balloon Experiment Hub ---
-        const BalloonLab = ({ onComplete, settings }) => {
-            const [subStage, setSubStage] = useState('charge'); 
-            const [charge, setCharge] = useState(0);
-            const [flying, setFlying] = useState([]);
+        let lastTime = Date.now();
+        this.timerInterval = setInterval(() => {
+            if (!this.isPlaying) return clearInterval(this.timerInterval);
             
-            const [papers, setPapers] = useState(Array.from({length: 12}).map((_,i) => ({
-                id:i, 
-                initialX: 20 + i*6, 
-                clumpOffset: (Math.random() * 10) - 5,
-                lifted: false
-            })));
+            const now = Date.now();
+            const delta = now - lastTime;
+            lastTime = now;
             
-            const [canX, setCanX] = useState(20);
-            const [balloonPos, setBalloonPos] = useState({ x: 80, y: 30 }); 
+            this.currentTime -= delta;
+            const pct = (this.currentTime / total) * 100;
+            this.ui.timer.style.width = `${pct}%`;
 
-            const handleInteraction = (e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            if (pct < 30) this.ui.timer.style.background = 'linear-gradient(90deg, #D50000, #FF1744)';
+            
+            if (this.currentLevelObj) this.currentLevelObj.update(delta);
 
-                const x = ((clientX - rect.left) / rect.width) * 100;
-                const y = ((clientY - rect.top) / rect.height) * 100;
+            if (this.currentTime <= 0) {
+                clearInterval(this.timerInterval);
+                this.handleFail("Time Up");
+            }
+        }, 16);
+    }
+
+    handleWin() {
+        if (this.isLevelTransitioning) return;
+        this.isLevelTransitioning = true;
+
+        clearInterval(this.timerInterval);
+        this.score++;
+        this.updateHUD();
+        const rect = this.ui.root.getBoundingClientRect();
+        for(let i=0; i<20; i++) {
+            createParticle(rect.width/2, rect.height/2, '#00C853', this.ui.root);
+        }
+        setTimeout(() => this.nextLevel(), 1500);
+    }
+
+    handleFail() {
+        if (this.isLevelTransitioning) return;
+        this.isLevelTransitioning = true;
+
+        clearInterval(this.timerInterval);
+        this.lives--;
+        this.ui.stage.classList.add('shake-screen');
+        setTimeout(() => this.ui.stage.classList.remove('shake-screen'), 400);
+
+        if(this.currentLevelObj && this.currentLevelObj.onFail) this.currentLevelObj.onFail();
+
+        setTimeout(() => {
+            this.updateHUD();
+            if(this.lives <= 0) this.gameOver();
+            else this.nextLevel();
+        }, 2500); // Wait longer for fail scene to be appreciated
+    }
+
+    gameOver() {
+        this.isPlaying = false;
+        document.getElementById('final-score-display').innerText = this.score;
+        this.ui.gameover.classList.remove('hidden');
+    }
+}
+
+/* --- Level 1: High-Fi Faucet --- */
+class LevelFaucet {
+    constructor(engine, duration) {
+        this.engine = engine;
+        this.instruction = "Twist to Close!";
+        this.duration = duration;
+        this.waterHeight = 0;
+        this.rotation = 0;
+        this.targetRotation = 360;
+        this.isDone = false;
+        this.isDragging = false;
+        
+        this.startDrag = this.startDrag.bind(this);
+        this.doDrag = this.doDrag.bind(this);
+        this.endDrag = this.endDrag.bind(this);
+    }
+
+    render(container) {
+        container.innerHTML = `
+        <div class="w-full h-full flex items-center justify-center relative overflow-hidden bg-[#FFECB3]">
+            <!-- Filipino Fruit Tile Pattern Background -->
+            <div class="absolute inset-0 z-0 opacity-20">
+                <svg width="100%" height="100%">
+                    <defs>
+                        <pattern id="fruitTiles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <rect width="40" height="40" fill="#FFECB3"/>
+                            <path d="M20 10 Q 25 5 30 15 Q 25 25 20 20 Q 15 15 20 10" fill="#FFB74D"/>
+                            <rect width="40" height="40" fill="none" stroke="#FFE0B2" stroke-width="1"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#fruitTiles)"/>
+                </svg>
+            </div>
+
+            <!-- Instructions (Side) -->
+            <div class="absolute left-6 top-32 z-20">
+                <div class="bg-white p-4 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0_rgba(0,0,0,0.5)] transform -rotate-2">
+                    <p class="text-2xl font-black text-gray-800 leading-none">TWIST<br>THE<br>HANDLE!</p>
+                </div>
+            </div>
+
+            <div class="relative w-full max-w-lg h-[600px] z-10 flex items-end justify-center pb-10">
+                <svg viewBox="0 0 400 500" class="w-full h-full drop-shadow-2xl" id="sink-svg" style="overflow: visible;">
+                    <defs>
+                        <linearGradient id="sinkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF" /><stop offset="100%" stop-color="#90A4AE" /></linearGradient>
+                        <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#78909C" /><stop offset="50%" stop-color="#ECEFF1" /><stop offset="100%" stop-color="#78909C" /></linearGradient>
+                        <clipPath id="basinClip"><path d="M50 300 Q50 450 200 450 Q350 450 350 300 Z" /></clipPath>
+                    </defs>
+
+                    <!-- Wall Mirror -->
+                    <g transform="translate(100, 20)">
+                        <rect x="0" y="0" width="200" height="120" rx="5" fill="#8D6E63" stroke="#3E2723" stroke-width="4"/>
+                        <rect x="15" y="15" width="170" height="90" fill="#E1F5FE" opacity="0.8"/>
+                        <path d="M30 90 L60 30 M50 90 L80 30" stroke="white" stroke-width="2" opacity="0.4"/>
+                    </g>
+
+                    <!-- Flower Pot -->
+                    <g transform="translate(320, 200)">
+                        <path d="M15 40 Q 15 10 0 0 Q 15 10 20 40" fill="#2E7D32"/>
+                        <path d="M15 40 Q 15 0 25 -10 Q 25 10 25 40" fill="#43A047"/>
+                        <path d="M5 40 L35 40 L30 60 L10 60 Z" fill="#D84315" stroke="#BF360C" stroke-width="2"/>
+                    </g>
+
+                    <!-- Sink Back -->
+                    <path d="M50 300 Q50 450 200 450 Q350 450 350 300 L350 280 L50 280 Z" fill="url(#sinkGrad)" stroke="#546E7A" stroke-width="2"/>
+
+                    <!-- Water Logic -->
+                    <g clip-path="url(#basinClip)">
+                        <rect id="water-rect" x="50" y="450" width="300" height="0" fill="#039BE5" opacity="0.9" />
+                    </g>
+                    
+                    <!-- Spilling Water (Hidden by default) -->
+                    <path id="spill-water" d="M50 300 Q200 320 350 300" stroke="#039BE5" stroke-width="0" fill="none" />
+
+                    <!-- Stream -->
+                    <rect id="stream-rect" x="190" y="220" width="20" height="250" fill="#29B6F6" opacity="0.8" />
+
+                    <!-- Sink Front Lip -->
+                    <path d="M40 300 Q200 360 360 300 L360 320 Q200 380 40 320 Z" fill="#CFD8DC" stroke="#546E7A" stroke-width="2"/>
+
+                    <!-- Faucet Structure -->
+                    <!-- Base Deck -->
+                    <rect x="230" y="270" width="60" height="20" fill="#90A4AE" stroke="#546E7A" stroke-width="2"/>
+                    <!-- Neck -->
+                    <path d="M260 280 L260 180 Q260 120 200 120 Q140 120 160 180 L180 230" fill="none" stroke="url(#metalGrad)" stroke-width="25" stroke-linecap="round" class="shadow-lg"/>
+                    <!-- Spout Tip -->
+                    <rect x="180" y="220" width="40" height="15" fill="#78909C" transform="rotate(10, 200, 220)"/>
+
+                    <!-- Handle (Attached to Base) -->
+                    <g id="handle-grp" transform="translate(290, 260)" style="cursor: grab;">
+                        <!-- Connection stem -->
+                        <rect x="-30" y="-5" width="30" height="10" fill="#78909C"/>
+                        <!-- Cross Handle -->
+                        <circle r="25" fill="url(#metalGrad)" stroke="#455A64" stroke-width="2"/>
+                        <rect x="-25" y="-6" width="50" height="12" rx="2" fill="#546E7A"/>
+                        <rect x="-6" y="-25" width="12" height="50" rx="2" fill="#546E7A"/>
+                        <circle r="8" fill="#B0BEC5"/>
+                    </g>
+                </svg>
+            </div>
+        </div>`;
+        
+        this.handle = document.getElementById('handle-grp');
+        this.water = document.getElementById('water-rect');
+        this.stream = document.getElementById('stream-rect');
+        this.spill = document.getElementById('spill-water');
+        this.svg = document.getElementById('sink-svg');
+    }
+
+    start() {
+        this.handle.addEventListener('mousedown', this.startDrag);
+        this.handle.addEventListener('touchstart', this.startDrag, {passive: false});
+        window.addEventListener('mousemove', this.doDrag);
+        window.addEventListener('touchmove', this.doDrag, {passive: false});
+        window.addEventListener('mouseup', this.endDrag);
+        window.addEventListener('touchend', this.endDrag);
+    }
+
+    startDrag(e) {
+        if(this.isDone) return;
+        this.isDragging = true;
+        this.handle.style.cursor = 'grabbing';
+        e.preventDefault();
+        
+        const rect = this.handle.getBoundingClientRect();
+        this.center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+        
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        this.lastAngle = Math.atan2(clientY - this.center.y, clientX - this.center.x);
+    }
+
+    doDrag(e) {
+        if(!this.isDragging) return;
+        e.preventDefault();
+        
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const curAngle = Math.atan2(clientY - this.center.y, clientX - this.center.x);
+        
+        let delta = curAngle - this.lastAngle;
+        if (delta > Math.PI) delta -= 2 * Math.PI;
+        if (delta < -Math.PI) delta += 2 * Math.PI;
+        
+        this.rotation += delta * (180/Math.PI);
+        this.rotation = Math.max(0, Math.min(this.targetRotation, this.rotation));
+        
+        this.lastAngle = curAngle;
+        this.updateVisuals();
+        
+        if(this.rotation >= this.targetRotation - 5) this.win();
+    }
+
+    endDrag() {
+        this.isDragging = false;
+        if(this.handle) this.handle.style.cursor = 'grab';
+    }
+
+    updateVisuals() {
+        this.handle.setAttribute('transform', `translate(290, 260) rotate(${this.rotation})`);
+        const progress = this.rotation / this.targetRotation;
+        const width = 20 * (1 - progress);
+        this.stream.setAttribute('width', Math.max(0, width));
+        this.stream.setAttribute('x', 190 + (20 - width)/2);
+        this.stream.setAttribute('opacity', 0.8 * (1 - progress));
+    }
+
+    update(dt) {
+        if(this.isDone) return;
+        // Water rises from bottom (y=450) up to rim (y=300). Height 0 -> 150.
+        const speed = (150 / this.duration) * 1.1; 
+        this.waterHeight += speed * dt;
+        
+        // Update rectangle
+        // y starts at 450, goes to 450 - height
+        this.water.setAttribute('y', 450 - this.waterHeight);
+        this.water.setAttribute('height', this.waterHeight);
+        
+        // Spill Effect if overflowing (> 140px height)
+        if (this.waterHeight > 140) {
+            const spillWidth = (this.waterHeight - 140) * 2;
+            this.spill.setAttribute('stroke-width', Math.min(20, spillWidth));
+        }
+        
+        if(this.waterHeight > 160) this.engine.handleFail();
+    }
+
+    win() {
+        this.isDone = true;
+        this.stream.setAttribute('opacity', '0');
+        // Success Text
+        const txt = document.createElement('div');
+        txt.className = "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl font-black text-green-600 drop-shadow-lg scale-0 animate-[pop_0.3s_ease-out_forwards]";
+        txt.innerText = "SAFE!";
+        this.handle.closest('.w-full').appendChild(txt);
+        this.engine.handleWin();
+    }
+
+    onFail() {
+        const ol = document.createElement('div');
+        ol.className = 'absolute inset-0 bg-red-900/80 flex items-center justify-center z-50 animate-[pop_0.3s_ease-out]';
+        ol.innerHTML = `<div class="bg-white p-6 rounded-lg shadow-2xl rotate-3 text-center border-4 border-red-500"><h2 class="text-4xl font-black text-red-600 mb-2">BILL OVERDUE</h2><div class="text-6xl font-bold text-gray-800">₱9,999</div><div class="mt-4 text-sm font-bold text-gray-500 uppercase tracking-widest">Wasted Water</div></div>`;
+        this.engine.ui.root.appendChild(ol);
+    }
+
+    cleanup() {
+        if (this.handle) {
+            this.handle.removeEventListener('mousedown', this.startDrag);
+            this.handle.removeEventListener('touchstart', this.startDrag);
+        }
+        window.removeEventListener('mousemove', this.doDrag);
+        window.removeEventListener('touchmove', this.doDrag);
+        window.removeEventListener('mouseup', this.endDrag);
+        window.removeEventListener('touchend', this.endDrag);
+    }
+}
+
+/* --- Level 2: High-Fi Umbrella --- */
+class LevelUmbrella {
+    constructor(engine, duration) {
+        this.engine = engine;
+        this.instruction = "Open Umbrella!";
+        this.duration = duration;
+        this.isOpen = false;
+        this.dragY = 200;
+        this.targetY = 80;
+        this.startY = 200;
+        
+        this.startDrag = this.startDrag.bind(this);
+        this.doDrag = this.doDrag.bind(this);
+        this.endDrag = this.endDrag.bind(this);
+    }
+
+    render(container) {
+        container.innerHTML = `
+        <div class="w-full h-full bg-beach flex flex-col items-center relative overflow-hidden">
+            <div id="sun" class="absolute top-8 right-8 w-24 h-24 bg-yellow-400 rounded-full blur-md animate-[float_4s_ease-in-out_infinite]"></div>
+            
+            <!-- High visibility instruction moved HIGHER -->
+            <div id="drag-msg" class="absolute top-24 left-1/2 -translate-x-1/2 text-white font-black text-2xl drop-shadow-md animate-pulse whitespace-nowrap z-40 pointer-events-none tracking-widest opacity-90">
+                SLIDE UP
+            </div>
+
+            <!-- Character -->
+            <svg id="char-svg" class="absolute bottom-10 z-10 drop-shadow-xl" width="160" height="220" viewBox="0 0 160 220">
+                <defs><radialGradient id="faceGrad"><stop offset="0%" stop-color="#FFE0B2"/><stop offset="100%" stop-color="#FFB74D"/></radialGradient></defs>
+                <circle id="face" cx="80" cy="50" r="35" fill="url(#faceGrad)" />
                 
-                setBalloonPos({ x, y });
+                <!-- Eyes -->
+                <circle cx="70" cy="45" r="3" fill="#3E2723"/>
+                <circle cx="90" cy="45" r="3" fill="#3E2723"/>
+                <!-- Mouth -->
+                <path id="mouth" d="M 70 60 Q 80 58 90 60" stroke="#3E2723" stroke-width="2" fill="none" stroke-linecap="round" />
 
-                if (subStage === 'charge') {
-                    if (x > 60 && y > 60) {
-                        if (charge < 15 && Math.random() > 0.8) {
-                            if(settings.sound) playSound('rub');
-                            const id = Date.now();
-                            setFlying(prev => [...prev, {id}]);
-                            setTimeout(() => {
-                                setCharge(c => c + 1);
-                                setFlying(prev => prev.filter(x => x.id !== id));
-                            }, 500);
-                        }
-                    }
-                } else if (subStage === 'paper') {
-                    setPapers(prev => prev.map(p => {
-                        const dist = Math.abs(p.initialX - x);
-                        const isClose = dist < 20 && y > 50; 
-                        
-                        if (charge > 5 && isClose && !p.lifted) {
-                            if(settings.sound && Math.random() > 0.8) playSound('swish');
-                            return {...p, lifted: true};
-                        }
-                        if ((dist > 25 || y < 40) && p.lifted) {
-                            return {...p, lifted: false};
-                        }
-                        return p;
-                    }));
-                } else if (subStage === 'can') {
-                    const dist = x - canX;
-                    if (charge > 5 && Math.abs(dist) < 35 && Math.abs(dist) > 5 && y > 50) {
-                        setCanX(prev => {
-                            const next = prev + (dist > 0 ? 0.8 : -0.8);
-                            if(settings.sound && Math.random() > 0.9) playSound('roll'); 
-                            return next;
-                        });
-                    }
-                }
-            };
+                <path d="M50 90 Q80 80 110 90 L110 160 L50 160 Z" fill="#42A5F5" />
+                <rect x="55" y="160" width="15" height="50" fill="#1565C0" rx="5" />
+                <rect x="90" y="160" width="15" height="50" fill="#1565C0" rx="5" />
+                <path d="M50 100 Q 30 120 70 110" stroke="#FFB74D" stroke-width="12" stroke-linecap="round" fill="none" />
+                <path d="M110 100 Q 130 120 100 120" stroke="#FFB74D" stroke-width="12" stroke-linecap="round" fill="none" />
+            </svg>
 
-            const getSparkleMsg = () => {
-                switch(subStage) {
-                    case 'charge': return "First things first! Rub the balloon on the sweater to load it up with negative electrons.";
-                    case 'paper': return "Now that the balloon is charged, lower it over the paper. The negative balloon pushes the paper's electrons away, making the top positive. Opposites attract!";
-                    case 'can': return "Aluminum cans are neutral, but the balloon can still pull it! Guide the can across the table.";
-                    case 'wall': return "The classic trick! Stick the balloon to the wall. The balloon pushes the wall's electrons deeper, sticking to the positive surface left behind.";
-                    default: return "";
-                }
-            }
-
-            return (
-                <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 animate-fadeIn">
-                    <div className="w-full flex flex-col md:flex-row gap-4 mb-4">
-                        <div className="flex-1">
-                            <Sparkle message={getSparkleMsg()} speak={settings.speak} />
-                        </div>
-                        {/* Microscope View Panel - Visible only in Paper & Can Stages */}
-                        {(subStage === 'paper' || subStage === 'can') && (
-                            <div className="w-full md:w-64 bg-blue-50 rounded-xl border-4 border-blue-200 p-3 shadow-inner flex flex-col animate-fadeIn shrink-0 h-64 md:h-auto">
-                                <h4 className="font-bold text-blue-800 text-center mb-2 border-b border-blue-200 pb-1">Microscope View 🔬</h4>
-                                
-                                {/* Visualization Container */}
-                                <div className="flex-grow relative bg-white rounded-lg border border-gray-300 overflow-hidden flex flex-col">
-                                    
-                                    {/* Balloon Surface (Top) */}
-                                    <div className="h-1/3 bg-purple-500 w-full flex items-center justify-center gap-1 text-white font-bold text-sm shadow-md z-10 transition-all duration-300"
-                                        style={{ transform: `translateY(${ (1 - (subStage === 'paper' ? (balloonPos.y > 50 ? 1 : 0) : (Math.abs(balloonPos.x - canX) < 40 ? 1 : 0))) * -10 }px)` }}>
-                                        {/* Show negative charges if charged */}
-                                        {charge > 0 ? Array.from({length: 5}).map((_, i) => <div key={i}>-</div>) : <span className="opacity-70 text-xs">Neutral</span>}
-                                    </div>
-
-                                    {/* Field Area */}
-                                    <div className="flex-grow relative flex justify-center items-center">
-                                        {charge > 5 && (subStage === 'paper' ? balloonPos.y > 50 : Math.abs(balloonPos.x - canX) < 40) && (
-                                            <div className="text-yellow-500 text-xs font-bold animate-pulse rotate-90">REPULSION &rarr;</div>
-                                        )}
-                                    </div>
-
-                                    {/* Object Surface (Bottom) */}
-                                    <div className="h-1/2 bg-gray-100 w-full border-t-2 border-gray-300 relative p-1">
-                                        <div className="absolute -top-4 left-1 bg-white px-1 text-[10px] text-gray-500 font-bold border border-gray-200 rounded">{subStage === 'paper' ? 'Paper' : 'Aluminum Can'}</div>
-                                        
-                                        <div className="grid grid-cols-4 gap-1 h-full content-center place-items-center">
-                                            {Array.from({length: 8}).map((_, i) => (
-                                                <div key={i} className="relative w-4 h-4 flex justify-center">
-                                                    {/* Proton (Fixed) */}
-                                                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[8px] font-bold z-10 shadow-sm">+</div>
-                                                    {/* Electron logic */}
-                                                    <div className="absolute w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center text-[8px] font-bold transition-all duration-500 ease-out z-20 shadow-sm border border-yellow-600"
-                                                        style={{ 
-                                                            top: (charge > 5 && (subStage === 'paper' ? balloonPos.y > 50 : Math.abs(balloonPos.x - canX) < 40)) ? '180%' : '20%', 
-                                                            opacity: 1 
-                                                        }}>
-                                                        -
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {/* Surface Charge Indicator */}
-                                        <div className={`absolute top-0 right-1 text-[8px] font-bold text-red-500 transition-opacity duration-300 ${(charge > 5 && (subStage === 'paper' ? balloonPos.y > 50 : Math.abs(balloonPos.x - canX) < 40)) ? 'opacity-100' : 'opacity-0'}`}>
-                                            + Surface
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <p className="text-[10px] text-center mt-2 text-gray-600 leading-tight">
-                                    {subStage === 'paper' 
-                                        ? "Negative balloon pushes paper's electrons deep inside!" 
-                                        : "Metal electrons run away fast! Positive surface pulls the can."}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex gap-2 mb-4 overflow-x-auto w-full justify-center pb-2">
-                        <Button onClick={() => setSubStage('charge')} disabled={subStage === 'charge'} className="text-sm">1. Charge It</Button>
-                        <Button onClick={() => setSubStage('paper')} disabled={charge < 5} className="text-sm">{charge < 5 ? "🔒 " : ""}2. Paper Bits</Button>
-                        <Button onClick={() => setSubStage('can')} disabled={charge < 5} className="text-sm">{charge < 5 ? "🔒 " : ""}3. Soda Can</Button>
-                        <Button onClick={() => setSubStage('wall')} disabled={charge < 5} className="text-sm">{charge < 5 ? "🔒 " : ""}4. Wall Stick</Button>
-                    </div>
-
-                    <div className="relative w-full h-96 bg-blue-50 rounded-xl border-2 border-blue-200 overflow-hidden select-none touch-none cursor-none"
-                        onMouseMove={handleInteraction}
-                        onTouchMove={handleInteraction}
-                    >
-                        {subStage === 'charge' && charge < 5 && <GuideArrow text="Rub here!" className="bottom-20 right-20" direction="down" />}
-                        {subStage === 'paper' && <GuideArrow text="Move Down" className="bottom-40 left-1/2 -translate-x-1/2" direction="down" />}
-                        {subStage === 'can' && <GuideArrow text="Lead the Can" className="bottom-40 left-1/4" direction="right" />}
-                        {subStage === 'wall' && <GuideArrow text="Go to Wall" className="top-1/2 right-40" direction="right" />}
-
-                        {subStage === 'charge' && (
-                            <>
-                                <div className="absolute bottom-0 right-10 w-48 h-48 bg-orange-200 rounded-t-3xl flex flex-wrap content-start p-4 gap-2 opacity-90">
-                                    <span className="absolute -top-8 font-bold text-orange-800">Sweater</span>
-                                    {Array.from({length: 8}).map((_, i) => <div key={`sp-${i}`} className="w-4 h-4 rounded-full bg-red-400 flex items-center justify-center text-[10px] text-white font-bold">+</div>)}
-                                    {Array.from({length: 15 - charge}).map((_, i) => <div key={`se-${i}`} className="w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center text-[10px] font-bold">-</div>)}
-                                </div>
-                                {flying.map(f => (
-                                    <div key={f.id} className="absolute bottom-20 right-20 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center font-bold z-30 flying-electron"
-                                        style={{ '--tx': '-100px', '--ty': '-100px' }}>-</div>
-                                ))}
-                            </>
-                        )}
-
-                        {subStage === 'paper' && (
-                            <div className="absolute bottom-0 w-full h-20 bg-gray-200 border-t-2 border-gray-300">
-                                {papers.map(p => (
-                                    <div key={p.id} className="absolute w-5 h-5 bg-white shadow-sm border border-gray-300 transition-all duration-300 ease-out flex flex-col items-center justify-center"
-                                        style={{ 
-                                            left: p.lifted ? `${balloonPos.x + p.clumpOffset}%` : `${p.initialX}%`, 
-                                            bottom: p.lifted ? `${Math.max(10, (100 - balloonPos.y) - 5)}%` : '10%',
-                                            transform: `rotate(${p.id * 20}deg)`
-                                        }}>
-                                        {/* Added charges */}
-                                        <span className="text-[6px] font-bold text-red-500 leading-none select-none">+</span>
-                                        <span className="text-[6px] font-bold text-blue-500 leading-none select-none">-</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {subStage === 'can' && (
-                            <div className="absolute bottom-10 w-16 h-24 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-400 border border-gray-500 rounded-lg flex items-center justify-center smooth-catchup"
-                                style={{ left: `${canX}%`, transform: `translateX(-50%) rotate(${canX * 10}deg)` }}>
-                                <div className="text-xs font-bold text-gray-500 rotate-90">SODA</div>
-                            </div>
-                        )}
-
-                        {subStage === 'wall' && (
-                            <div className="absolute right-0 h-full w-32 bg-yellow-100 border-l-4 border-yellow-200 flex flex-col justify-around p-2">
-                                {Array.from({length:5}).map((_,i) => (
-                                    <div key={i} className="flex gap-2 items-center">
-                                        <div className="w-6 h-6 bg-red-400 rounded-full flex items-center justify-center text-white text-xs">+</div>
-                                        <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs transition-transform duration-300"
-                                            style={{ transform: balloonPos.x > 80 ? 'translateX(20px)' : 'translateX(0)' }}>-</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="absolute w-32 h-40 bg-purple-500 rounded-[50%_50%_50%_50%/40%_40%_60%_60%] shadow-xl flex items-center justify-center z-50 pointer-events-none no-lag"
-                            style={{ 
-                                left: `${balloonPos.x}%`, 
-                                top: `${balloonPos.y}%`,
-                                transform: 'translate(-50%, -50%) rotate(-10deg)',
-                            }}>
-                            <div className="absolute -bottom-3 w-3 h-5 bg-purple-600"></div>
-                            <div className="grid grid-cols-4 gap-1 p-4">
-                                {Array.from({length: charge}).map((_, i) => (
-                                    <div key={`b-${i}`} className="w-4 h-4 rounded-full bg-yellow-300 text-[8px] flex items-center justify-center font-bold select-none">-</div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+            <!-- Umbrella -->
+            <div class="absolute bottom-10 z-20 pointer-events-none">
+                 <svg width="220" height="350" viewBox="0 0 220 350" style="overflow:visible">
+                    <defs><linearGradient id="poleGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#5D4037"/><stop offset="50%" stop-color="#8D6E63"/><stop offset="100%" stop-color="#4E342E"/></linearGradient></defs>
                     
-                    {subStage === 'wall' && (
-                        <div className="mt-6 animate-bounce">
-                            <Button onClick={onComplete} className="bg-green-500 hover:bg-green-600 text-xl px-8 py-3">Finish Experiments &rarr;</Button>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+                    <!-- Pole -->
+                    <rect x="105" y="20" width="10" height="300" rx="5" fill="url(#poleGrad)" />
+                    
+                    <!-- Canopy Group (With Flaps) -->
+                    <g id="canopy" transform="translate(110, 20) scale(0.15, 1)" style="transition: transform 0.05s linear">
+                        <!-- Scalloped Canopy Path -->
+                        <path d="M0 0 L-100 120 Q -50 100 0 120 Q 50 100 100 120 L0 0 Z" fill="#E53935" stroke="#B71C1C" stroke-width="2" class="shadow-filter"/>
+                        <!-- Ribs -->
+                        <path d="M0 0 L-50 110" stroke="#B71C1C" stroke-width="2" fill="none" />
+                        <path d="M0 0 L50 110" stroke="#B71C1C" stroke-width="2" fill="none" />
+                    </g>
+                    
+                    <!-- Runner -->
+                    <g id="runner-hitbox">
+                        <rect id="runner" x="95" y="200" width="30" height="20" rx="4" fill="#8D6E63" stroke="#3E2723" stroke-width="2"/>
+                        <!-- Connector Struts -->
+                        <line id="strut-left" x1="110" y1="200" x2="110" y2="20" stroke="rgba(0,0,0,0.3)" stroke-width="2" />
+                        <line id="strut-right" x1="110" y1="200" x2="110" y2="20" stroke="rgba(0,0,0,0.3)" stroke-width="2" />
+                    </g>
+                 </svg>
+            </div>
+            
+            <!-- Full Screen Interaction Surface -->
+            <div id="drag-surface" class="absolute inset-0 z-50 cursor-ns-resize"></div>
+        </div>`;
 
-        // --- STAGE 6: Daily Life Simulations ---
-        const DailyLife = ({ onComplete, settings }) => {
-            const [level, setLevel] = useState(null); 
-            const [sockPos, setSockPos] = useState(0); 
-            const [cloudCharge, setCloudCharge] = useState(0);
-            const [strike, setStrike] = useState(false);
+        this.canopy = document.getElementById('canopy');
+        this.runner = document.getElementById('runner');
+        this.surface = document.getElementById('drag-surface');
+        this.dragMsg = document.getElementById('drag-msg');
+        this.face = document.getElementById('face');
+        this.mouth = document.getElementById('mouth');
+        this.sun = document.getElementById('sun');
+        this.hitbox = document.getElementById('runner-hitbox');
+        this.strutL = document.getElementById('strut-left');
+        this.strutR = document.getElementById('strut-right');
+    }
 
-            // Door knob state
-            const [personX, setPersonX] = useState(10); 
-            const [personCharge, setPersonCharge] = useState(0);
-            const [zap, setZap] = useState(false);
-            const draggingRef = useRef(false);
+    start() {
+        this.surface.addEventListener('mousedown', this.startDrag);
+        this.surface.addEventListener('touchstart', this.startDrag, {passive: false});
+        
+        window.addEventListener('mousemove', this.doDrag);
+        window.addEventListener('touchmove', this.doDrag, {passive: false});
+        window.addEventListener('mouseup', this.endDrag);
+        window.addEventListener('touchend', this.endDrag);
+    }
 
-            const resetLevel = () => {
-                setSockPos(0);
-                setPersonX(10);
-                setPersonCharge(0);
-                setZap(false);
-                setCloudCharge(0);
-                setStrike(false);
-            }
+    startDrag(e) {
+        if(this.isOpen) return;
+        this.isDragging = true;
+        this.mouseStart = e.touches ? e.touches[0].clientY : e.clientY;
+        this.objStart = this.dragY;
+        this.dragMsg.style.opacity = 0;
+    }
 
-            const renderMenu = () => (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full animate-fadeIn">
-                    {[
-                        {id: 'laundry', t: 'Sticky Laundry', i: '👕'},
-                        {id: 'doorknob', t: 'The Door Knob', i: '🚪'},
-                        {id: 'lightning', t: 'Lightning Storm', i: '⚡'}
-                    ].map(l => (
-                        <button key={l.id} onClick={() => { resetLevel(); setLevel(l.id); }} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all border-t-8 border-blue-400 hover:-translate-y-2">
-                            <div className="text-6xl mb-4">{l.i}</div>
-                            <h3 className="font-bold text-xl">{l.t}</h3>
-                        </button>
-                    ))}
-                    <div className="md:col-span-3 text-center mt-8">
-                        <Button onClick={onComplete} className="bg-purple-600 hover:bg-purple-700 text-xl px-10 py-3">Take the Quiz! &rarr;</Button>
-                    </div>
-                </div>
-            );
+    doDrag(e) {
+        if(!this.isDragging) return;
+        e.preventDefault();
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        const dy = this.mouseStart - cy; 
+        
+        // Map drag to runner position
+        this.dragY = Math.max(this.targetY, Math.min(this.startY, this.objStart - dy));
+        
+        this.updateVisuals();
 
-            const getSparkleMsg = () => {
-                if (!level) return "Static electricity is everywhere! Pick a scenario to explore.";
-                if (level === 'laundry') return "Clothes rubbing together in the dryer transfer electrons. Pull the sock off the shirt!";
-                if (level === 'doorknob') return "Drag the person left and right to scrub their feet on the carpet. When you're fully charged, touch the knob to ZAP!";
-                if (level === 'lightning') return "Clouds are just big static machines! Rub them together to make lightning.";
-            }
+        if(this.dragY <= this.targetY + 10) this.win();
+    }
 
-            return (
-                <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 animate-fadeIn">
-                    <h2 className="text-3xl font-bold text-blue-600 mb-6">Daily Life Examples</h2>
-                    <Sparkle message={getSparkleMsg()} emotion={zap || strike ? 'shocked' : 'happy'} speak={settings.speak} />
+    updateVisuals() {
+        this.runner.setAttribute('y', this.dragY);
+        
+        const range = this.startY - this.targetY;
+        const current = this.startY - this.dragY;
+        const progress = Math.max(0, Math.min(1, current / range));
+        
+        // Scale X significantly wider (Max 1.4 scale)
+        const scaleX = 0.15 + (progress * 1.25); 
+        this.canopy.setAttribute('transform', `translate(110, 20) scale(${scaleX}, 1)`);
+        
+        // Update Connector Struts to track the "Ribs"
+        const strutY = this.dragY + 5;
+        // Midpoint of ribs roughly
+        const ribMidY = 20 + (100 * 0.5); 
+        const ribMidXSpread = (100 * scaleX) * 0.5; // Halfway out
+        
+        this.strutL.setAttribute('x1', 110 - ribMidXSpread);
+        this.strutL.setAttribute('y1', ribMidY); 
+        this.strutL.setAttribute('x2', 110);
+        this.strutL.setAttribute('y2', strutY);
+        
+        this.strutR.setAttribute('x1', 110 + ribMidXSpread);
+        this.strutR.setAttribute('y1', ribMidY);
+        this.strutR.setAttribute('x2', 110);
+        this.strutR.setAttribute('y2', strutY);
+    }
 
-                    {!level && renderMenu()}
+    endDrag() {
+        this.isDragging = false;
+    }
 
-                    {level === 'laundry' && (
-                        <div className="w-full bg-white p-8 rounded-xl shadow-xl flex flex-col items-center">
-                            <div className="relative w-64 h-64 bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center">
-                                <div className="w-32 h-40 bg-blue-500 rounded flex items-center justify-center text-white relative">
-                                    Shirt
-                                    {sockPos < 80 && sockPos > 10 && <div className="absolute right-0 top-1/2 text-yellow-400 text-2xl font-bold animate-pulse">⚡</div>}
-                                </div>
-                                <div className="absolute w-16 h-24 bg-red-400 rounded-b-full flex items-center justify-center text-white cursor-grab active:cursor-grabbing transition-transform duration-75"
-                                    style={{ 
-                                        transform: `translateX(${sockPos}px) rotate(${sockPos/2}deg)`,
-                                        left: '50%' 
-                                    }}
-                                    onMouseDown={(e) => {
-                                        const startX = e.clientX;
-                                        const onMove = (mv) => {
-                                            const diff = Math.max(0, Math.min(150, mv.clientX - startX));
-                                            setSockPos(diff);
-                                            if (Math.random() > 0.9 && settings.sound) playSound('rub');
-                                        };
-                                        const onUp = () => {
-                                            document.removeEventListener('mousemove', onMove);
-                                            document.removeEventListener('mouseup', onUp);
-                                            if (sockPos < 100) setSockPos(0); 
-                                            else playSound('pop');
-                                        };
-                                        document.addEventListener('mousemove', onMove);
-                                        document.addEventListener('mouseup', onUp);
-                                    }}
-                                >
-                                    Sock
-                                </div>
-                            </div>
-                            {sockPos >= 100 && <div className="text-green-600 font-bold mt-4 animate-bounce">POP! Static Release!</div>}
-                            <Button onClick={() => setLevel(null)} className="mt-6">Back</Button>
-                        </div>
-                    )}
+    update(dt) {
+        // Gravity closes it if released
+        if(!this.isDragging && !this.isOpen && this.dragY < this.startY) {
+            this.dragY += 0.4 * dt;
+            this.updateVisuals();
+        }
+    }
 
-                    {level === 'doorknob' && (
-                        <div className="w-full bg-white p-8 rounded-xl shadow-xl flex flex-col items-center select-none"
-                            onMouseUp={() => draggingRef.current = false}
-                            onMouseLeave={() => draggingRef.current = false}
-                        >
-                            <div className="w-full h-80 relative bg-purple-50 rounded-lg border-b-8 border-yellow-700 overflow-hidden"
-                                onMouseMove={(e) => {
-                                    if (!draggingRef.current) return;
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                                    
-                                    const delta = Math.abs(x - personX);
-                                    if (delta > 0.5) {
-                                        setPersonCharge(c => Math.min(100, c + 1));
-                                        if (settings.sound && Math.random() > 0.8) playSound('rub');
-                                    }
-                                    
-                                    setPersonX(Math.max(5, Math.min(80, x)));
-                                    
-                                    if (x > 75 && personCharge > 50) {
-                                        setZap(true);
-                                        setPersonCharge(0);
-                                        draggingRef.current = false;
-                                        playSound('zap');
-                                    }
-                                }}
-                                onMouseDown={() => { if(!zap) draggingRef.current = true; }}
-                            >
-                                <div className="absolute bottom-0 w-full h-8 bg-yellow-800 opacity-20" 
-                                    style={{backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 11px)'}}></div>
+    win() {
+        this.isOpen = true;
+        this.dragY = this.targetY;
+        this.updateVisuals();
+        this.hitbox.style.display = 'none';
+        
+        // Smirk (Simple)
+        this.mouth.setAttribute('d', 'M 70 60 Q 80 65 90 55'); 
+        
+        this.sun.classList.remove('animate-[float_4s_ease-in-out_infinite]');
+        this.sun.classList.add('animate-bounce');
+        this.engine.handleWin();
+    }
 
-                                {personCharge < 50 && !zap && <div className="absolute top-4 left-1/2 -translate-x-1/2 text-gray-500 font-bold animate-pulse">&larr; SCRUB FEET LEFT & RIGHT &rarr;</div>}
-                                {personCharge >= 50 && !zap && <div className="absolute top-4 left-1/2 -translate-x-1/2 text-red-500 font-bold animate-pulse">CHARGED! TOUCH THE KNOB! &rarr;</div>}
+    onFail() {
+        if (this.face) this.face.setAttribute('fill', '#ef5350');
+    }
 
-                                <div className="absolute right-0 top-1/3 w-8 h-24 bg-gray-300 rounded-l-lg border-l-2 border-gray-400 flex items-center justify-center">
-                                    <div className="w-6 h-6 rounded-full bg-yellow-500 border-2 border-yellow-700 shadow-sm relative">
-                                        {zap && <div className="absolute -left-10 -top-10 text-6xl animate-ping">⚡</div>}
-                                    </div>
-                                </div>
+    cleanup() {
+        if (this.surface) {
+            this.surface.removeEventListener('mousedown', this.startDrag);
+            this.surface.removeEventListener('touchstart', this.startDrag);
+        }
+        window.removeEventListener('mousemove', this.doDrag);
+        window.removeEventListener('touchmove', this.doDrag);
+        window.removeEventListener('mouseup', this.endDrag);
+        window.removeEventListener('touchend', this.endDrag);
+    }
+}
 
-                                <div className={`absolute bottom-0 w-24 h-56 transition-transform duration-75 cursor-ew-resize`}
-                                    style={{ left: `${personX}%`, transform: 'translateX(-50%)' }}
-                                >
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-16 bg-blue-200 rounded-full border-2 border-blue-300 flex items-center justify-center text-2xl">
-                                        {zap ? '😲' : '🙂'}
-                                    </div>
-                                    <div className="absolute top-16 left-1/2 -translate-x-1/2 w-12 h-24 bg-blue-500 rounded-lg"></div>
-                                    <div className="absolute top-20 right-0 w-16 h-4 bg-blue-500 rounded-full origin-left rotate-[-10deg]"></div>
-                                    <div className="absolute top-16 -right-5 w-6 h-6 bg-blue-200 rounded-full"></div> 
-                                    
-                                    <div className={`absolute bottom-0 left-2 w-4 h-16 bg-blue-700 ${draggingRef.current ? 'animate-bounce' : ''}`}></div>
-                                    <div className={`absolute bottom-0 right-2 w-4 h-16 bg-blue-700 ${draggingRef.current ? 'animate-bounce' : ''} animation-delay-100`}></div>
-                                    
-                                    <div className="absolute inset-0 border-4 border-yellow-400 rounded-full opacity-0 transition-opacity duration-200"
-                                        style={{ opacity: personCharge / 100 }}></div>
-                                </div>
-                            </div>
+/* --- Level 3: High-Fi Circuit --- */
+class LevelCircuit {
+    constructor(engine, duration) {
+        this.engine = engine;
+        this.instruction = "Connect Power!";
+        this.duration = duration;
+        this.isDone = false;
+        this.isDragging = false;
+        
+        this.startP = {x: 100, y: 150};
+        this.endP = {x: 260, y: 170}; // Target bulb tip
+        this.currP = {x: 100, y: 220};
 
-                            <div className="w-full h-6 bg-gray-200 rounded-full mt-4 overflow-hidden border border-gray-300">
-                                <div className="h-full bg-gradient-to-r from-yellow-200 to-red-500 transition-all duration-100" style={{width: `${personCharge}%`}}></div>
-                            </div>
-                            <div className="text-center text-sm font-bold text-gray-500 mt-1">STATIC CHARGE LEVEL</div>
+        this.bindStart = this.dragStart.bind(this);
+        this.bindMove = this.dragMove.bind(this);
+        this.bindEnd = this.dragEnd.bind(this);
+    }
 
-                            <Button onClick={() => setLevel(null)} className="mt-6">Back</Button>
-                        </div>
-                    )}
-
-                    {level === 'lightning' && (
-                        <div className="w-full bg-white p-8 rounded-xl shadow-xl flex flex-col items-center">
-                            <div className="relative w-full h-64 bg-gray-800 rounded-xl overflow-hidden" 
-                                onMouseMove={(e) => { 
-                                    if(e.buttons === 1 && !strike) { 
-                                        setCloudCharge(c => Math.min(100, c + 1)); 
-                                        if (settings.sound && Math.random() > 0.8) playSound('rub');
-                                        if(cloudCharge > 98) { setStrike(true); playSound('zap'); }
-                                    }
-                                }}
-                            >
-                                {strike && <div className="absolute inset-0 bg-white animate-ping opacity-50"></div>}
-                                {strike && (<svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 20 L40 50 L60 50 L30 90" stroke="yellow" strokeWidth="2" fill="none" className="animate-pulse" /></svg>)}
-                                <div className="absolute top-10 left-1/2 -translate-x-1/2 w-40 h-20 bg-gray-400 rounded-full blur-sm opacity-80 cursor-grab active:cursor-grabbing"><div className="absolute top-0 right-0 w-20 h-20 bg-gray-400 rounded-full -mt-8"></div><div className="absolute top-0 left-0 w-20 h-20 bg-gray-400 rounded-full -mt-6"></div></div>
-                                <div className="absolute bottom-0 w-full flex items-end justify-center gap-2 opacity-50"><div className="w-8 h-10 bg-black"></div><div className="w-10 h-20 bg-black"></div><div className="w-6 h-8 bg-black"></div></div>
-                            </div>
-                            <div className="w-64 h-4 bg-gray-700 rounded mt-4 overflow-hidden border border-gray-500"><div className="h-full bg-yellow-400 transition-all duration-200" style={{width: `${cloudCharge}%`}}></div></div>
-                            <Button onClick={() => setLevel(null)} className="mt-6">Back</Button>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        // --- STAGE 7: Quiz ---
-        const QuizLevel = ({ onRestart, settings }) => {
-            const [qIndex, setQIndex] = useState(0);
-            const [score, setScore] = useState(0);
-            const [showResult, setShowResult] = useState(false);
-            const [selected, setSelected] = useState(null);
-
-            const questions = [
-                {
-                    q: "Where are electrons located in an atom?",
-                    o: ["Deep in the center", "On the outer shells", "Inside the protons", "They don't exist"],
-                    a: 1, 
-                    f: [ 
-                        "Not quite. The center (Nucleus) holds Protons and Neutrons. Electrons are on the outside!",
-                        "Correct! They fly around the outer shells, making them easy to move.",
-                        "Protons are separate particles in the nucleus. Electrons orbit around them.",
-                        "They definitely exist! We just spent the whole lab playing with them!"
-                    ]
-                },
-                {
-                    q: "What charge does an electron have?",
-                    o: ["Positive (+)", "Neutral (0)", "Negative (-)", "Spicy"],
-                    a: 2,
-                    f: [
-                        "Protons are Positive (+). Electrons are the opposite.",
-                        "Neutrons are Neutral (0). Electrons have a charge.",
-                        "Correct! Electrons are Negative (-).",
-                        "Haha, no! Electrons are shocking, not spicy!"
-                    ]
-                },
-                {
-                    q: "How is static electricity created?",
-                    o: ["By cooling down atoms", "By friction (rubbing)", "By melting plastic", "By adding water"],
-                    a: 1,
-                    f: [
-                        "Temperature isn't the key here.",
-                        "Correct! Friction (rubbing) knocks those loose outer electrons off one object and onto another.",
-                        "Melting changes the state of matter, not the electrical charge.",
-                        "Water conducts electricity, but it doesn't create static charge by itself."
-                    ]
-                },
-                {
-                    q: "What happens when two objects have Opposite charges (+ and -)?",
-                    o: ["They Attract", "They Repel", "They Explode", "Nothing"],
-                    a: 0,
-                    f: [
-                        "Spot on! Opposites Attract! Positive pulls Negative.",
-                        "Likes repel (++/--). Opposites do the reverse!",
-                        "Ideally not in this lab! They just pull together.",
-                        "There is definitely a force involved!"
-                    ]
-                },
-                {
-                    q: "Why did the paper stick to the balloon?",
-                    o: ["The paper was magnetic", "Glue", "The balloon polarized the paper", "Magic"],
-                    a: 2,
-                    f: [
-                        "Paper isn't magnetic. Something electrical is happening.",
-                        "No glue involved! It's all static.",
-                        "Correct! The negative balloon pushed the paper's electrons away, creating a positive side that attracted to the balloon.",
-                        "It looks like magic, but it's Science!"
-                    ]
-                }
-            ];
-
-            const handleAnswer = (idx) => {
-                setSelected(idx);
-                if (idx === questions[qIndex].a) {
-                    setScore(s => s + 1);
-                    if(settings.sound) playSound('success');
-                } else {
-                    if(settings.sound) playSound('fail');
-                }
-            };
-
-            const nextQuestion = () => {
-                if (qIndex < questions.length - 1) {
-                    setQIndex(i => i + 1);
-                    setSelected(null);
-                } else {
-                    setShowResult(true);
-                }
-            };
-
-            if (showResult) {
-                return (
-                    <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-8 bg-white rounded-xl shadow-xl animate-fadeIn mt-10">
-                        <Sparkle 
-                            message={score === 5 ? "WOW! A perfect score! You're a true Static Scientist!" : "Great effort! You've learned a lot today."} 
-                            emotion="excited" 
-                            speak={settings.speak}
-                        />
-                        <h2 className="text-4xl font-bold text-blue-600 mb-4">Quiz Complete!</h2>
-                        <div className="text-6xl font-bold mb-8">{score} / {questions.length}</div>
-                        
-                        <div className="bg-blue-50 p-6 rounded-xl text-left w-full mb-8 border-l-8 border-blue-500">
-                            <h3 className="text-2xl font-bold text-blue-800 mb-4">Mission Debrief: What We Learned</h3>
-                            <ul className="space-y-3 text-lg text-gray-700">
-                                <li>⚛️ <strong>Atoms:</strong> Protons (+) and Neutrons (0) are stuck in the nucleus. Electrons (-) fly on the outside.</li>
-                                <li>⚡ <strong>Static Charge:</strong> Friction (rubbing) steals those loose outer electrons.</li>
-                                <li>🧲 <strong>The Golden Rule:</strong> Opposites Attract (+ and -), Likes Repel (- and -).</li>
-                                <li>🌍 <strong>Real Life:</strong> Lightning, doorknob shocks, and sticky laundry are all static electricity in action!</li>
-                            </ul>
-                        </div>
-
-                        <Button onClick={onRestart} className="px-8 py-4 text-xl bg-purple-600">Restart Simulation</Button>
-                    </div>
-                );
-            }
-
-            const q = questions[qIndex];
-
-            return (
-                <div className="flex flex-col items-center w-full max-w-2xl mx-auto p-4 animate-fadeIn mt-6">
-                    <h2 className="text-2xl font-bold text-purple-600 mb-6">Review Quiz</h2>
-                    <Sparkle 
-                        message={selected !== null ? (selected === q.a ? "You got it! " + q.f[selected] : "Oops! " + q.f[selected]) : q.q} 
-                        speak={settings.speak}
-                        emotion={selected !== null && selected !== q.a ? 'shocked' : 'happy'}
-                    />
-                    <div className="w-full bg-white p-6 rounded-xl shadow-lg">
-                        <div className="flex justify-between text-sm text-gray-500 mb-4">
-                            <span>Question {qIndex + 1} of {questions.length}</span>
-                            <span>Score: {score}</span>
-                        </div>
-                        
-                        <div className="space-y-3 mb-6">
-                            {q.o.map((opt, i) => (
-                                <button 
-                                    key={i} 
-                                    onClick={() => selected === null && handleAnswer(i)}
-                                    disabled={selected !== null}
-                                    className={`w-full p-4 rounded-lg text-left font-medium transition-colors border-2 
-                                        ${selected === null ? 'bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-300' : 
-                                        i === q.a ? 'bg-green-100 border-green-500 text-green-800' : 
-                                        selected === i ? 'bg-red-100 border-red-500 text-red-800' : 'bg-gray-50 border-gray-200 opacity-50'
-                                        }`}
-                                >
-                                    {opt}
-                                </button>
-                            ))}
-                        </div>
-
-                        {selected !== null && (
-                            <div className="animate-fadeIn">
-                                <div className={`p-4 rounded-lg mb-4 text-sm font-bold ${selected === q.a ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                    {q.f[selected]} {selected !== q.a && <span className="block mt-1">The correct answer is: {q.o[q.a]}</span>}
-                                </div>
-                                <div className="text-right">
-                                    <Button onClick={nextQuestion}>Next &rarr;</Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        // --- Main App Controller ---
-        const App = () => {
-            const [stage, setStage] = useState(0); 
-            const [showCredits, setShowCredits] = useState(false);
-            const [settings, setSettings] = useState({ sound: true, speak: true });
-
-            const toggleSound = () => {
-                setSettings(s => {
-                const newSound = !s.sound;
-                toggleMusic(newSound); // Toggle music with sound
-                return {...s, sound: newSound, speak: newSound};
-                });
-            };
-
-            useEffect(() => {
-                // Ensure music stops if unmounted or sound off initially
-                return () => toggleMusic(false);
-            }, []);
-
-            return (
-                <div className="min-h-screen pb-12 flex flex-col relative">
-                <GlobalStyles />
+    render(container) {
+        container.innerHTML = `
+        <div class="w-full h-full bg-circuit flex flex-col items-center justify-center relative">
+            <svg id="svg-circuit" width="100%" height="100%" viewBox="0 0 400 300" style="overflow:visible; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));">
+                <defs>
+                    <linearGradient id="glassGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff" stop-opacity="0.8"/><stop offset="100%" stop-color="#CFD8DC" stop-opacity="0.4"/></linearGradient>
+                </defs>
+                <!-- Static Wires -->
+                <!-- Batt (-) to Bulb (-) side -->
+                <path d="M40 170 L40 260 L280 260 L280 120 L260 120" fill="none" stroke="#546E7A" stroke-width="8" stroke-linecap="round"/>
                 
-                {/* Header */}
-                <header className="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
-                    <div className="max-w-4xl flex-col items-start gap-0">
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-                        ⚡ Sparkle's Static Lab
-                        </h1>
-                        <div className="text-sm font-light hidden sm:block">| Grade 5 Science</div>
-                    </div>
-                    
-                    <div className="relative ml-8">
-                            <button 
-                                onClick={() => setShowCredits(!showCredits)}
-                                className="flex items-center gap-1 text-xs text-blue-200 hover:text-white transition-colors"
-                            >
-                                <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center font-bold text-[10px]">i</span>
-                                <span>Info</span>
-                            </button>
-                            {showCredits && (
-                                <div className="absolute left-0 top-6 bg-white text-gray-800 p-4 rounded shadow-xl w-64 text-sm z-50 border border-gray-200 animate-fadeIn text-left">
-                                    <p className="font-bold mb-1">Created by:</p>
-                                    <p>Sir Angelo Medez</p>
-                                    <p className="text-xs text-gray-500 mt-2">via Gemini Canvas</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                        {/* Sound Toggle */}
-                        <button 
-                            onClick={toggleSound}
-                            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center font-bold text-lg transition-colors"
-                            title="Toggle Sound/Voice"
-                        >
-                            {settings.speak ? '🔊' : '🔇'}
-                        </button>
-                    </div>
-                </header>
+                <!-- Batt (+) to Switch top -->
+                <path d="M40 110 L40 80 L100 80 L100 110" fill="none" stroke="#D32F2F" stroke-width="8" stroke-linecap="round"/>
+                
+                <!-- Battery Group -->
+                <g transform="translate(20, 110)">
+                    <rect x="0" y="0" width="40" height="60" rx="4" fill="#66BB6A" stroke="#2E7D32" stroke-width="2"/>
+                    <rect x="10" y="-8" width="20" height="8" fill="#B0BEC5"/>
+                    <text x="13" y="40" font-weight="900" fill="white" font-size="24">⚡</text>
+                </g>
+                
+                <!-- Switch Group -->
+                <g transform="translate(80, 110)">
+                    <rect x="0" y="0" width="40" height="40" rx="4" fill="#78909C" stroke="#455A64" stroke-width="2"/>
+                </g>
+                
+                <!-- Bulb Group -->
+                <g transform="translate(220, 90)">
+                    <rect x="20" y="60" width="40" height="20" fill="#B0BEC5"/>
+                    <path d="M20 65 L60 65 M20 75 L60 75" stroke="#78909C" stroke-width="2"/>
+                    <circle id="bulb-glass" cx="40" cy="35" r="35" fill="url(#glassGrad)" stroke="#B0BEC5" stroke-width="1"/>
+                    <path d="M30 60 L30 35 L40 20 L50 35 L50 60" fill="none" stroke="#546E7A" stroke-width="2" class="filament"/>
+                    <circle cx="40" cy="80" r="10" fill="#FFEB3B" opacity="0.5" class="animate-pulse" />
+                </g>
+                
+                <!-- Target Zone -->
+                <circle cx="260" cy="170" r="15" fill="none" stroke="#FFEB3B" stroke-width="2" stroke-dasharray="4" class="animate-spin opacity-50 origin-[260px_170px]"/>
+                
+                <!-- Dynamic Wire (Red) -->
+                <path id="dyn-wire" d="M100 150 Q 100 220 100 220" fill="none" stroke="#D32F2F" stroke-width="8" stroke-linecap="round" class="shadow-filter"/>
+                <g id="wire-head" transform="translate(100, 220)" style="cursor: pointer;">
+                    <circle r="12" fill="#D32F2F" stroke="#fff" stroke-width="3"/>
+                </g>
+            </svg>
+        </div>`;
 
-                <main className="container mx-auto mt-6 px-2 flex-grow">
-                    {/* Progress Bar */}
-                    <div className="max-w-xl mx-auto mb-8 flex justify-between items-center px-4 relative">
-                    <div className="absolute left-0 right-0 top-1/2 h-1 bg-gray-300 -z-10"></div>
-                    {['Atom', 'Shells', 'Forces', 'Comb', 'Balloon', 'Daily', 'Quiz'].map((label, idx) => {
-                        const s = idx + 1;
-                        return (
-                            <div key={s} className="flex flex-col items-center z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold transition-colors duration-500 ${stage >= s ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-500'}`}>
-                                {s}
-                                </div>
-                                <span className="text-[10px] sm:text-xs mt-1 text-gray-500 hidden sm:block">{label}</span>
-                            </div>
-                        );
-                    })}
+        this.svg = document.getElementById('svg-circuit');
+        this.wire = document.getElementById('dyn-wire');
+        this.head = document.getElementById('wire-head');
+        this.bulb = document.getElementById('bulb-glass');
+        this.updateWire(); // Ensure visible immediately
+    }
+
+    start() {
+        this.head.addEventListener('mousedown', this.bindStart);
+        this.head.addEventListener('touchstart', this.bindStart, {passive: false});
+        window.addEventListener('mousemove', this.bindMove);
+        window.addEventListener('touchmove', this.bindMove, {passive: false});
+        window.addEventListener('mouseup', this.bindEnd);
+        window.addEventListener('touchend', this.bindEnd);
+    }
+
+    dragStart(e) {
+        if(this.isDone) return;
+        this.isDragging = true;
+        e.preventDefault();
+    }
+
+    dragMove(e) {
+        if(!this.isDragging) return;
+        e.preventDefault();
+        
+        const pt = this.svg.createSVGPoint();
+        pt.x = e.touches ? e.touches[0].clientX : e.clientX;
+        pt.y = e.touches ? e.touches[0].clientY : e.clientY;
+        const loc = pt.matrixTransform(this.svg.getScreenCTM().inverse());
+
+        this.currP = {x: loc.x, y: loc.y};
+        this.updateWire();
+
+        const dist = Math.hypot(this.currP.x - this.endP.x, this.currP.y - this.endP.y);
+        if(dist < 30) this.connect();
+    }
+
+    dragEnd() {
+        this.isDragging = false;
+    }
+
+    updateWire() {
+        const midX = (this.startP.x + this.currP.x) / 2;
+        const midY = (this.startP.y + this.currP.y) / 2 + 50;
+        this.wire.setAttribute('d', `M${this.startP.x} ${this.startP.y} Q ${midX} ${midY} ${this.currP.x} ${this.currP.y}`);
+        this.head.setAttribute('transform', `translate(${this.currP.x}, ${this.currP.y})`);
+    }
+    
+    update(dt) {}
+
+    connect() {
+        this.isDone = true;
+        this.isDragging = false;
+        this.currP = this.endP;
+        this.updateWire();
+        this.bulb.setAttribute('fill', '#FFEB3B');
+        this.bulb.classList.add('glow-filter');
+        for(let i=0; i<10; i++) {
+            createParticle(this.currP.x, this.currP.y, '#FFFF00', this.engine.ui.root);
+        }
+        setTimeout(() => this.showNightScene(), 500);
+        this.engine.handleWin();
+    }
+
+    showNightScene() {
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-night z-20 flex items-center justify-center animate-[pop_0.5s_ease-out]';
+        overlay.innerHTML = `
+            <div class="relative w-64 h-64">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-blue-900 border-4 border-gray-800 overflow-hidden"><div class="w-4 h-4 rounded-full bg-yellow-200 absolute top-2 right-4 shadow-[0_0_10px_white]"></div></div>
+                <div class="absolute bottom-0 w-full h-2 bg-amber-800"></div>
+                <!-- Smiling Child Profile -->
+                <svg viewBox="0 0 100 100" class="absolute bottom-2 left-10 w-40 h-40">
+                    <circle cx="50" cy="50" r="20" fill="#FFCC80"/>
+                    <path d="M55 55 Q 60 60 55 65" stroke="#3E2723" stroke-width="2" fill="none" /> <!-- Smile -->
+                    <circle cx="60" cy="48" r="2" fill="#3E2723"/> <!-- Eye -->
+                    <path d="M30 70 Q 50 60 70 70 L 70 100 L 30 100 Z" fill="#EF5350"/>
+                    <path d="M20 90 L 80 90 L 50 80 Z" fill="#fff" stroke="#ccc" stroke-width="1"/>
+                </svg>
+                <!-- Lamp ON -->
+                <svg viewBox="0 0 100 100" class="absolute bottom-2 right-10 w-24 h-40">
+                    <path d="M10 20 L 50 20 L 40 10 L 20 10 Z" fill="#424242"/>
+                    <line x1="30" y1="20" x2="30" y2="80" stroke="#424242" stroke-width="4"/>
+                    <path d="M20 90 L 40 90" stroke="#424242" stroke-width="8"/>
+                    <path d="M30 20 L -20 100 L 80 100 Z" fill="url(#lightGrad)" opacity="0.6"/>
+                    <defs><linearGradient id="lightGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFEB3B" stop-opacity="0.8"/><stop offset="100%" stop-color="#FFEB3B" stop-opacity="0"/></linearGradient></defs>
+                </svg>
+            </div>`;
+        this.engine.ui.root.appendChild(overlay);
+    }
+
+    onFail() {
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-black z-50 flex flex-col items-center justify-center animate-pulse';
+        overlay.innerHTML = `
+            <div class="relative w-64 h-64 opacity-50">
+                <div class="absolute bottom-0 w-full h-2 bg-gray-800"></div>
+                <!-- Sad Child Profile Dark -->
+                <svg viewBox="0 0 100 100" class="absolute bottom-2 left-10 w-40 h-40 filter grayscale brightness-50">
+                    <circle cx="50" cy="50" r="20" fill="#FFCC80"/>
+                    <path d="M55 65 Q 60 60 55 58" stroke="#3E2723" stroke-width="2" fill="none" /> <!-- Frown -->
+                    <circle cx="60" cy="48" r="2" fill="#3E2723"/>
+                    <path d="M30 70 Q 50 60 70 70 L 70 100 L 30 100 Z" fill="#EF5350"/>
+                </svg>
+                <div class="absolute top-10 left-20 text-white font-black text-4xl">?</div>
+            </div>
+            <h2 class="text-white font-black text-3xl mt-4">TOO DARK!</h2>
+            <p class="text-gray-400">Can't study without light...</p>
+        `;
+        this.engine.ui.root.appendChild(overlay);
+    }
+
+    cleanup() {
+        if (this.head) {
+            this.head.removeEventListener('mousedown', this.bindStart);
+            this.head.removeEventListener('touchstart', this.bindStart);
+        }
+        window.removeEventListener('mousemove', this.bindMove);
+        window.removeEventListener('touchmove', this.bindMove);
+        window.removeEventListener('mouseup', this.bindEnd);
+        window.removeEventListener('touchend', this.bindEnd);
+    }
+}
+
+/* --- Level 4: High-Fi Candle --- */
+class LevelCandle {
+    constructor(engine, duration) {
+        this.engine = engine;
+        this.instruction = "Extinguish Fire!";
+        this.duration = duration;
+        this.active = [true, true, true];
+        this.done = false;
+        this.bindClick = this.click.bind(this);
+    }
+
+    render(container) {
+        container.innerHTML = `
+        <div class="w-full h-full bg-gray-900 flex flex-col items-center justify-end relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-800"></div>
+            <div class="absolute top-10 w-64 h-48 bg-blue-900 rounded border-8 border-gray-700 shadow-inner overflow-hidden"><div class="absolute top-4 right-8 w-12 h-12 bg-gray-100 rounded-full blur-[1px] shadow-[0_0_30px_white]"></div></div>
+            <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-amber-900 to-amber-800 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] z-10"></div>
+            <div class="absolute left-0 top-0 h-full w-48 z-0">
+                <svg width="100%" height="100%" viewBox="0 0 100 200" preserveAspectRatio="none">
+                    <defs><linearGradient id="curtainGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#B71C1C"/><stop offset="50%" stop-color="#D32F2F"/><stop offset="100%" stop-color="#B71C1C"/></linearGradient></defs>
+                    <path id="curtain-path" d="M0 0 L100 0 Q 80 100 100 200 L0 200 Z" fill="url(#curtainGrad)" class="shadow-filter"/>
+                </svg>
+            </div>
+            <div id="candle-rack" class="absolute bottom-16 z-20 flex space-x-12 px-8">
+                ${[0,1,2].map(i => `
+                    <div class="candle-group relative w-12 h-40 cursor-pointer transition-transform active:scale-95" data-idx="${i}">
+                        <svg viewBox="0 0 40 120" class="w-full h-full drop-shadow-lg">
+                            <defs><linearGradient id="waxGrad${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FFF8E1"/><stop offset="50%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#FFE0B2"/></linearGradient></defs>
+                            <rect x="5" y="40" width="30" height="80" fill="url(#waxGrad${i})" />
+                            <path d="M5 40 Q 20 45 35 40" fill="none" stroke="#FFE0B2" stroke-width="1"/>
+                            <rect x="18" y="30" width="4" height="10" fill="#3E2723" />
+                            <g class="flame-anim origin-[20px_35px]">
+                                <path d="M20 35 Q 5 35 5 20 Q 20 0 35 20 Q 35 35 20 35" fill="#FF6D00" opacity="0.8" />
+                                <path d="M20 35 Q 10 35 10 25 Q 20 10 30 25 Q 30 35 20 35" fill="#FFD600" />
+                            </g>
+                        </svg>
                     </div>
+                `).join('')}
+            </div>
+        </div>
+        <style>.flame-anim { animation: flicker 0.1s infinite alternate; } @keyframes flicker { 0% { transform: scale(1) skewX(0deg); } 100% { transform: scale(1.1) skewX(2deg); } }</style>`;
 
-                    {stage === 0 && (
-                    <div className="text-center mt-12 animate-fadeIn flex flex-col items-center">
-                        <h1 className="text-4xl md:text-6xl font-bold text-blue-800 mb-6 floating">Hello, Lasallian Scientists!</h1>
-                        <p className="text-2xl text-purple-600 font-bold mb-4">Welcome to the Static Lab.</p>
-                        <Sparkle message="Hi! I'm Sparkle! I'll be your guide today as we explore the shocking world of static electricity!" speak={settings.speak} />
-                        <div className="max-w-md mx-auto text-left bg-white p-6 rounded-lg shadow-md mb-8 space-y-2">
-                            <p className="text-lg font-bold text-gray-700">Your Mission:</p>
-                            <ol className="list-decimal pl-5 text-gray-600 space-y-1">
-                                <li><strong>Build an Atom:</strong> Learn the parts.</li>
-                                <li><strong>Explore Shells:</strong> See why electrons move.</li>
-                                <li><strong>Master Forces:</strong> Discover how charges attract and repel.</li>
-                                <li><strong>Charge Objects:</strong> Use friction to steal electrons.</li>
-                                <li><strong>Perform Magic:</strong> Roll cans, lift paper, and stick balloons!</li>
-                            </ol>
-                        </div>
-                        <Button onClick={() => { setStage(1); toggleMusic(settings.sound); }} className="text-2xl px-10 py-4 shadow-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">Start Lab</Button>
-                    </div>
-                    )}
+        this.rack = document.getElementById('candle-rack');
+        this.curtain = document.getElementById('curtain-path');
+    }
 
-                    {stage === 1 && <AtomBuilder onComplete={() => setStage(2)} settings={settings} />}
-                    {stage === 2 && <ElectronShellLevel onComplete={() => setStage(3)} settings={settings} />}
-                    {stage === 3 && <ChargesLevel onComplete={() => setStage(4)} settings={settings} />}
-                    {stage === 4 && <CombLab onComplete={() => setStage(5)} settings={settings} />}
-                    {stage === 5 && <BalloonLab onComplete={() => setStage(6)} settings={settings} />}
-                    {stage === 6 && <DailyLife onComplete={() => setStage(7)} settings={settings} />}
-                    {stage === 7 && <QuizLevel onRestart={() => setStage(0)} settings={settings} />}
+    start() {
+        this.rack.addEventListener('mousedown', this.bindClick);
+        this.rack.addEventListener('touchstart', (e)=>{ e.preventDefault(); this.bindClick(e); });
+    }
 
-                </main>
-                </div>
-            );
-        };
+    click(e) {
+        if(this.done) return;
+        const grp = e.target.closest('.candle-group');
+        if(!grp) return;
+        
+        const idx = grp.dataset.idx;
+        if(this.active[idx]) {
+            this.active[idx] = false;
+            const flame = grp.querySelector('.flame-anim');
+            if(flame) flame.style.display = 'none';
+            const rect = grp.getBoundingClientRect();
+            createParticle(rect.left + rect.width/2, rect.top + 20, '#9E9E9E', this.engine.ui.root);
+            createParticle(rect.left + rect.width/2, rect.top + 10, '#BDBDBD', this.engine.ui.root);
+            if(this.active.every(v => !v)) this.win();
+        }
+    }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+    win() {
+        this.done = true;
+        this.engine.handleWin();
+    }
+    
+    update(dt) {}
+
+    onFail() {
+        const div = document.createElement('div');
+        div.className = 'absolute inset-0 z-50 bg-orange-600/40 mix-blend-color-dodge flex items-center justify-center animate-pulse';
+        div.innerHTML = `<h1 class="text-9xl font-black text-white drop-shadow-[0_0_20px_rgba(255,0,0,0.8)]">FIRE!</h1>`;
+        this.engine.ui.root.appendChild(div);
+    }
+
+    cleanup() {
+        if (this.rack) {
+            this.rack.removeEventListener('mousedown', this.bindClick);
+        }
+    }
+}
+
+// Init Game
+const game = new GameEngine();
 
 </script>
 </body>
